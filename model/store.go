@@ -1,5 +1,5 @@
 // Package data is responsible for encapsulating database specific code.
-package data
+package model
 
 import (
 	"errors"
