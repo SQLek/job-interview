@@ -10,9 +10,9 @@ Jeżeli chcesz być na bieżąco, uderz do mnie bezpośrednio sqlek AT sqlek DOT
 
 ## Uruchomienie i testy
 
-  docker compose build
-  docker compose up
-  go test ./...
+    docker compose build
+    docker compose up
+    go test ./...
 
 ### Uwaga na windowsie
 
@@ -117,6 +117,8 @@ Jeżeli tak stawiamy sprawę to:
   ponieważ nie sądzę aby te czynności były wykonywane często.
   Nie wiem jak MySQL ale postgresa można shardować w stylu master-slaves dla reduntancji.
 
+To jest niestety więcej jak parę dni którymi dysponowałem.
+
 ## Dług techniczny
 
 Doba nie z gumy, deadline to deadline.
@@ -130,7 +132,15 @@ Jak embeduje się gorm.Model to delete nie jest twarde i by zostawały w bazie.
 Bez osadzenia gorm.Model, wbudowane createdAt przestało działać.
 Jestem przekonany że jakaś pierdółka.
 
-ETA jedna dniówka
+### Dodać konteksty do modelu
+
+Zapytania do bazy są na tyle krótkie że nie widzę potrzeby.
+
+### Rekalkulacja czasu workera
+
+Podczas update zabijany jest jeden worker, i startowany drugi.
+Można by dodaćdo api modelu "GetLastEntry" i kalkulować potencjalne opóźnienie,
+aby było mniej dzikie.
 
 ### Zmigrować testy integracyjne na DockerTest
 
