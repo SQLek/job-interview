@@ -82,6 +82,9 @@ func (sched *scheduler) SpawnWorker(ctx context.Context, task model.Task) (uint,
 	if err != nil {
 		return 0, err
 	}
+	// task is delivered by value
+	// id isn't propagated here
+	task.ID = id
 
 	// ctx is from http server and will timeout worker quickly
 	workerCtx, cancel := context.WithCancel(context.Background())

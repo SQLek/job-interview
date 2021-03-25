@@ -12,15 +12,15 @@ type Task struct {
 
 // Representation of single fetch attempt
 type Entry struct {
-	ID     uint
-	TaskID uint
+	ID     uint `json:"-"`
+	TaskID uint `json:"-"`
 	//CreatedAt time.Time - for some reason it works in gorm.Model?
 	// TODO investigate and remove following hack
-	Created float64
+	Created float64 `json:"created_at"`
 
-	Duration float32
-	Content  string
-	Code     int
+	Duration float32 `json:"duration"`
+	Content  string  `json:"response"`
+	Code     int     `json:"-"`
 }
 
 // Puts task into database and returns its ID.

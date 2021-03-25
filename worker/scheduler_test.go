@@ -25,6 +25,7 @@ func TestScheluding(t *testing.T) {
 		Duration: 1,
 		Content:  "Meow",
 		Code:     200,
+		TaskID:   1,
 	}
 
 	// checking if spawning worker will add task to database
@@ -38,7 +39,8 @@ func TestScheluding(t *testing.T) {
 
 	// now we sleep something more than two iterations
 	time.Sleep(12 * time.Second)
-	sche.KillWorker(context.Background(), uint(id))
+	err = sche.KillWorker(context.Background(), uint(id))
+	assert.Nil(err)
 	mock.AssertExpectations(t)
 
 }

@@ -2,17 +2,15 @@
 
 Zadanie rekrutacyjne dla Wirtualnej Polski.
 
-Zadanie jest aktualnie dopinane, weryfikowane i wysyłane.
-Jest udostępnione w takiej formie aby zrobić uprawnienia na githubie.
-
-Kwestia godzinki może dwóch.
-Jeżeli chcesz być na bieżąco, uderz do mnie bezpośrednio sqlek AT sqlek DOT org
+Prosty serwer REST z funkcją obserwowania zewnętrznych serwisów http.
 
 ## Uruchomienie i testy
 
     docker compose build
     docker compose up
     go test ./...
+    go vet ./...
+    golangci-lint run ./...
 
 ### Uwaga na windowsie
 
@@ -22,22 +20,38 @@ DockerTest obsługuje windowsa, ale jeszcze nie obsługuje TLS
 Prawoklik ikona dockera, ustawienia i załączyć
 > Expose daemon on tcp://localhost:2375 without TLS
 
+Takie coś powinno otworzyć nie szyfrowany socket tylko dla lokalnej maszyny.
+Nie jestem specem od podsystemu sieciowego windows,
+wiec ręki nie dam sobie uciąć.
+
 ## Rest API
 
-Pełen opis znajdziesz w ZadanieGo.pdf.
-Jak starczy czasu opiszę je też tutaj.
+Pełen opis i specyfikacja w pliku ZadanieGo.pdf.
 
 ### GET /api/urls
 
 Listuje adresy które aktualnie są obserwowane.
+Zwraca tablicę JSon.
 
 ### POST /api/urls
 
 Dodaje adres to cyklicznego obserwowania.
+Akceptuje obiekt JSon z polami:
+
+* url - adres który chcemy obserwować
+* interval - odstęp czasu pomiedzy odczytami
+  nie mniej niż 5 sekund. Domyślnie 60 sekund.
+
+Zwraca oiekt JSon z polem `id` identyfikującym zadania.
 
 ### PATCH /api/urls/{ID}
 
-Modyfikuje jeden z obserwowanych adresów.
+Modyfikuje dane obserwowanego adresu wskazywany przez `ID`.
+Akceptuje obiekt JSon z polami:
+
+* url - adres który chcemy obserwować
+* interval - odstęp czasu pomiedzy odczytami
+  nie mniej niż 5 sekund. Domyślnie 60 sekund.
 
 ### DELETE /api/urls/{ID}
 
@@ -45,12 +59,13 @@ Przestaje obserwować dany adres i usuwa wzmianki z bazy danych.
 
 ### GET /api/urls/{ID}/history
 
-Listuje historię podglądu danego adresu.
+Listuje historię podglądu danego adresu, jako tablice JSon
 
 ## Odpowiedzi na pytania otwarte
 
-* Jakie problemy mogą się pojawić w trakcie działania serwisu?
-* W jaki sposób zabezpieczyć serwis przed złośliwymi zapytaniami?
+### Jakie problemy mogą się pojawić w trakcie działania serwisu?
+
+### W jaki sposób zabezpieczyć serwis przed złośliwymi zapytaniami?
 
 Ten projekt, nawet perfekcyjnie wykonany ma potencjał na nadużycia,
 czy wykorzystaniu przez osoby trzecie do DoS.
@@ -58,8 +73,7 @@ czy wykorzystaniu przez osoby trzecie do DoS.
 Z pomysłów jakie mam na zminimalizowanie powierzchni ataku to:
 
 * Dodanie ograniczenia dla kolumny url "unique" aby jeden adres nie mógł się pojawić wielokrotnie
-* Normalizacja adresów aby uniknać nadużyć czy pomyłek w rodzaju `example.com?foo=bar` i `example.com?foo=baz`.
-  Ograniczenie
+* Normalizacja obserwowanych adresów aby uniknać nadużyć czy pomyłek w rodzaju `example.com?foo=bar` i `example.com?foo=baz`.
 * Whitelista z adresami/domenami które przewidujemy obserwować.
 
 ### Ile zapytań i danych serwis jest w stanie obsłużyć?
@@ -67,13 +81,30 @@ Z pomysłów jakie mam na zminimalizowanie powierzchni ataku to:
 Ile jednoczesnych obserwacji można by było prowadzić na raz?
 Więcej niż jedno. Ile dokładnie zależy od maszyny.
 
+Co do zapytań o historię obserwacji dochodzi również jak długą historię system ma przechowywać.
+
+Z pierwszej generacji ryzena, setki zapytań na sekundę możliwe że się wyciśnie.
+Przechowywanie obserwacji w bazie `key-value` lub `wide-column` może dociagnie do paru tysiecy na sekundę.
+
+Nie benchmarkowałem tego projektu wiec szacunki proszę uważać że są z kopystką soli.
+
 ### W jaki sposób można się przygotować na większy ruch?
 
 Mój pomysł na zwiększenie przepustowości systemu opisałem w `Moja opinia co do serwer/worker`.
 
 ### W jaki sposób sprawdzić, że wszystko działa? Co monitorować?
 
-(TODO)
+Doświadczenie mam jedynie z prometeuszem/grafaną.
+Prometeusz korzysta z tego samego muxa/servera,
+co daje nam możliwość sprawdzenia czy kontener żyje.
+
+Monitorujemy ile zapytań http z odpowiedzią 200/400/500 było.
+Jeżeli odpowiedzi 400 jest wiecej jak x% można podnieść alarm.
+Jeżeli odpowiedzi 500 jest wiecej jak 0.0x% można podnieść alarm.
+
+Można też monitorować QoS (quality of service), na przykład histogramami.
+Można obserwować jaki czas reakcji miało 90% zapytań.
+Jak wzrośnie powyżej iluś milisekund, podnieść alarm.
 
 ## Moje opinie
 
@@ -110,8 +141,8 @@ Jeżeli tak stawiamy sprawę to:
   SIGHUP przy modyfikacji zadania.
 
 * Zbiór wyników umieściłbym w osobnej bazie danych.
-  Parę dni temu robiłem zadanie z Cassandrą i była by to fajna opcja.
-  Można byłoby rozważyć Redis, Kafka czy Influx ale nie mam na nich doświadczenia.
+  Parę dni temu robiłem zadanie rekrutacyjne z Cassandrą i była by to fajna opcja.
+  Można byłoby rozważyć Redis, Kafka czy Influx ale nie jestem biegły w tych bazach.
 
 * Ruch dodaj/usuń zadanie zostawiłbym na bazie SQL,
   ponieważ nie sądzę aby te czynności były wykonywane często.
@@ -121,41 +152,43 @@ To jest niestety więcej jak parę dni którymi dysponowałem.
 
 ## Dług techniczny
 
-Doba nie z gumy, deadline to deadline.
 W moich projektach utrzymuję listę
 `nie do końca eleganckie, działa, do poprawki jak będzie luźniej`
-Oto taka lista dla tego projektu
+Oto lista co można by było proprawić, czy przemyśleć w wolnej chwili.
 
-### GORM.createdAt
+### GORM
 
-Jak embeduje się gorm.Model to delete nie jest twarde i by zostawały w bazie.
+To jest mój pierwszy projekt z bibloteką GORM.
+Nie jestem biegły z MySQL wiec zdecydowałem się ugryźć temat ORM-em.
+Bibloteka sprawuje sięcałkiem fajnie,
+co nie zmienia faktu że większe rozeznanie z nią, by mi nie zaszkodziło.
+
+Jak embeduje się gorm.Model to delete nie jest twarde i usuniete dane by zostawały w bazie.
 Bez osadzenia gorm.Model, wbudowane createdAt przestało działać.
-Jestem przekonany że jakaś pierdółka.
 
-### Dodać konteksty do modelu
+Dodałbym konteksty i timeouty do zapytań listTasks/listEntries.
+Może mimo wszystko paginacja.
+Do prototypu nie widzę potrzeby.
 
-Zapytania do bazy są na tyle krótkie że nie widzę potrzeby.
-
-### Rekalkulacja czasu workera
-
-Podczas update zabijany jest jeden worker, i startowany drugi.
-Można by dodaćdo api modelu "GetLastEntry" i kalkulować potencjalne opóźnienie,
-aby było mniej dzikie.
-
-### Zmigrować testy integracyjne na DockerTest
-
-Trzeba by było się wgryść jak zlinkować poszczególne kontenery,
-przy użyciu DockerTest w podobny sposób w jaki aktualnie jest ustawiony
-docker-compose.
-
-Przy okazji można by było zrefaktorować testy.
-Wyciagnąć main do katalogu cmd, testy umieścić w katalogu głównym.
-
-ETA dniówka - trzy
-
-### DockerTest a TLS na windows
+### DockerTest
 
 DockerTest bardzo przydatne narzedzie.
 Zamiast mockować można testować z prawdziwą bazą i prawdziwym driverem.
 
-Chciałbym obczaić jak używać tego narzędzia z docker compose czy docker swarm.
+Dotychczas radziłem sobie przy pomocy:
+    docker compose build
+    docker compose up
+    go test ./...
+    docker compose down
+
+Z DockerTest, w kodzie szykujacym testy,
+można odpalać kontenery z usługami potrzebnymi przez testy.
+
+Baza danych zawsze czysta.
+Nie trzeba ręcznie przydzielać portów.
+
+Zamierzam poswiecić tematowi więcej czasu w przyszłosci.
+
+## Zakończenie
+
+Dziękuję za poświecony czas w audyt mojego rozwiązania na zadanie rekrutacyjne.

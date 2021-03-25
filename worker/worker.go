@@ -45,10 +45,13 @@ func fetchAndPut(ctx context.Context, model model.Model, task model.Task) {
 	if err != nil {
 		log.Printf("Request failed! '%s' %s", task.URL, err)
 	}
+	entry.TaskID = task.ID
 
 	_, err = model.PutEntry(entry)
 	if err != nil {
 		log.Printf("Database upload failed! %s", err)
+		log.Println("Task: ", task)
+		log.Println("Entry: ", entry)
 	}
 
 }

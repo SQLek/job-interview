@@ -11,9 +11,9 @@ require (
 	github.com/containerd/continuity v0.0.0-20210315143101-93e15499afd5 // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/go-chi/chi/v5 v5.0.1
+	github.com/golangci/golangci-lint v1.38.0 // indirect
 	github.com/gotestyourself/gotestyourself v1.3.0 // indirect
 	github.com/jinzhu/now v1.1.2 // indirect
-	github.com/lib/pq v0.0.0-20180327071824-d34b9ff171c2 // indirect
 	github.com/opencontainers/image-spec v1.0.1 // indirect
 	github.com/opencontainers/runc v1.0.0-rc93 // indirect
 	github.com/ory/dockertest/v3 v3.6.3
