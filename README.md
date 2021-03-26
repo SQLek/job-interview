@@ -1,8 +1,7 @@
 # wp-interview
 
-Zadanie rekrutacyjne dla Wirtualnej Polski.
-
 Prosty serwer REST z funkcją obserwowania zewnętrznych serwisów http.
+Projekt powstał jako zadanie rekrutacyjne.
 
 ## Uruchomienie i testy
 
