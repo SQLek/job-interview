@@ -1,4 +1,4 @@
-# wp-interview
+# Job-Interview
 
 Prosty serwer REST z funkcją obserwowania zewnętrznych serwisów http.
 Projekt powstał jako zadanie rekrutacyjne.
